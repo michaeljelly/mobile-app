@@ -31,7 +31,7 @@
 /build/
 android/key.properties
 android/key.jks
-
+.fvm
 # Web related
 lib/generated_plugin_registrant.dart
 
