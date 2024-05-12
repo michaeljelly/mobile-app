@@ -24,9 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../common/icons/fonts/rebble_icons.dart';
-
-class MyWatchesTab extends HookWidget implements CobbleScreen {
+class MyWatchesTab extends HookConsumerWidget implements CobbleScreen {
   final Color _disconnectedColor = Color.fromRGBO(255, 255, 255, 0.5);
   final Color _connectedColor = Color.fromARGB(255, 0, 169, 130);
 
@@ -35,12 +33,12 @@ class MyWatchesTab extends HookWidget implements CobbleScreen {
   final ConnectionControl connectionControl = ConnectionControl();
 
   @override
-  Widget build(BuildContext context) {
-    final connectionState = useProvider(connectionStateProvider.state);
-    final defaultWatch = useProvider(defaultWatchProvider);
-    final pairedStorage = useProvider(pairedStorageProvider);
-    final allWatches = useProvider(pairedStorageProvider.state);
-    final preferencesFuture = useProvider(preferencesProvider.future);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final connectionState = ref.watch(connectionStateProvider);
+    final defaultWatch = ref.watch(defaultWatchProvider);
+    final pairedStorage = ref.watch(pairedStorageProvider.notifier);
+    final allWatches = ref.watch(pairedStorageProvider);
+    final preferencesFuture = ref.watch(preferencesProvider.future);
 
     List<PebbleScanDevice> allWatchesList =
         allWatches.map((e) => e.device).toList();
@@ -294,7 +292,7 @@ class MyWatchesTab extends HookWidget implements CobbleScreen {
                           Container(
                             child: Center(
                                 child: PebbleWatchIcon(
-                                    PebbleWatchModel.values[e.color!],
+                                    PebbleWatchModel.values[e.color ?? 0],
                                     backgroundColor: _getBrStatusColor(e))),
                           ),
                           SizedBox(width: 16),

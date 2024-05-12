@@ -1,6 +1,7 @@
 package io.rebble.cobble.bluetooth
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,22 @@ class ConnectionLooper @Inject constructor(
     private var currentConnection: Job? = null
     private var lastConnectedWatch: String? = null
 
+    fun negotiationsComplete(watch: PebbleBluetoothDevice) {
+        if (connectionState.value is ConnectionState.Negotiating) {
+            _connectionState.value = ConnectionState.Connected(watch)
+        } else {
+            Timber.w("negotiationsComplete state mismatch!")
+        }
+    }
+
+    fun recoveryMode(watch: PebbleBluetoothDevice) {
+        if (connectionState.value is ConnectionState.Connected || connectionState.value is ConnectionState.Negotiating) {
+            _connectionState.value = ConnectionState.RecoveryMode(watch)
+        } else {
+            Timber.w("recoveryMode state mismatch!")
+        }
+    }
+
     fun connectToWatch(macAddress: String) {
         coroutineScope.launch {
             try {
@@ -46,15 +63,20 @@ class ConnectionLooper @Inject constructor(
                         Timber.d("Bluetooth is off. Waiting until it is on Cancel connection attempt.")
 
                         _connectionState.value = ConnectionState.WaitingForBluetoothToEnable(
-                                BluetoothAdapter.getDefaultAdapter()?.getRemoteDevice(macAddress)
+                                BluetoothAdapter.getDefaultAdapter()?.getRemoteDevice(macAddress)?.let { PebbleBluetoothDevice(it) }
                         )
 
-                        getBluetoothStatus(context).first { bluetoothOn -> bluetoothOn == true }
+                        getBluetoothStatus(context).first { bluetoothOn -> bluetoothOn }
                     }
 
                     try {
                         blueCommon.startSingleWatchConnection(macAddress).collect {
-                            _connectionState.value = it.toConnectionStatus()
+                            if (it is SingleConnectionStatus.Connected && connectionState.value !is ConnectionState.Connected && connectionState.value !is ConnectionState.RecoveryMode) {
+                                // initial connection, wait on negotiation
+                                _connectionState.value = ConnectionState.Negotiating(it.watch)
+                            } else {
+                                _connectionState.value = it.toConnectionStatus()
+                            }
                             if (it is SingleConnectionStatus.Connected) {
                                 retryTime = HALF_OF_INITAL_RETRY_TIME
                             }
@@ -116,7 +138,9 @@ class ConnectionLooper @Inject constructor(
 
         scope.launch(Dispatchers.Unconfined) {
             connectionState.collect {
-                if (it !is ConnectionState.Connected) {
+                if (it !is ConnectionState.Connected &&
+                        it !is ConnectionState.Negotiating &&
+                        it !is ConnectionState.RecoveryMode) {
                     scope.cancel()
                 }
             }
