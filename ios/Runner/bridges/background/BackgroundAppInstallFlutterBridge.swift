@@ -22,7 +22,7 @@ class BackgroundAppInstallFlutterBridge {
                 }
                 
                 appInstallCallbacks.beginAppInstallInstallData(appInstallData) { error in
-                    seal.resolve(true, error)
+                    seal.resolve(true,  error as? NSError)
                 }
             }.catch { error in
                 seal.reject(error)
@@ -31,7 +31,7 @@ class BackgroundAppInstallFlutterBridge {
     }
     
     func deleteApp(uuid: StringWrapper) -> Promise<Bool> {
-        return Promise { seal in
+        let x = Promise { seal in
             getAppInstallCallbacks().done { appInstallCallbacks in
                 guard let appInstallCallbacks = appInstallCallbacks else {
                     seal.fulfill(false)
@@ -39,12 +39,15 @@ class BackgroundAppInstallFlutterBridge {
                 }
                 
                 appInstallCallbacks.deleteAppUuid(uuid) { error in
-                    seal.resolve(true, error)
+                    seal.resolve(true, error as? NSError)
+                    
                 }
             }.catch { error in
                 seal.reject(error)
             }
         }
+        return x
+        
     }
     
     private func getAppInstallCallbacks() -> Promise<BackgroundAppInstallCallbacks?> {

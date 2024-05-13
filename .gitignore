@@ -48,3 +48,6 @@ test/**/failures/
 
 # Flutter Version Manager
 /.fvm
+
+#secrets
+# local.properties

@@ -2748,7 +2748,9 @@ void BackgroundControlSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject
         binaryMessenger:binaryMessenger
         codec:BackgroundControlGetCodec()];
     if (api) {
-      NSCAssert([api respondsToSelector:@selector(notifyFlutterBackgroundStartedWithCompletion:)], @"BackgroundControl api (%@) doesn't respond to @selector(notifyFlutterBackgroundStartedWithCompletion:)", api);
+//      NSCAssert([api respondsToSelector:@selector(notifyFlutterBackgroundStartedWithCompletion:)], @"BackgroundControl api (%@) doesn't respond to @selector(notifyFlutterBackgroundStartedWithCompletion:)", api);
+      if (!channel)  NSLog(@"Channel isn't fine");
+      else NSLog(@"Channel successfully created");
       [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
         [api notifyFlutterBackgroundStartedWithCompletion:^(NumberWrapper *_Nullable output, FlutterError *_Nullable error) {
           callback(wrapResult(output, error));

@@ -8,7 +8,7 @@
 import Foundation
 import PromiseKit
 import CocoaLumberjackSwift
-import shared_preferences_ios
+//import shared_preferences_ios
 class FlutterBackgroundController: NSObject, BackgroundControl {
     static var shared: FlutterBackgroundController!
     private var engine: FlutterEngine?
