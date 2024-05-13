@@ -69,17 +69,29 @@ class FlutterBackgroundController: NSObject, BackgroundControl {
                     .catch { error in
                         seal.reject(error)
                     }
+//                seal.fulfill(flutterEngine)
             }
         }
     }
     
     private func createFlutterBridges(flutterEngine: FlutterEngine) -> Promise<()> {
-        return queue.async(.promise) {
+        return Promise {seal in
+            print("Creating flutter bridges on \(String(describing: Thread.current))")
             BackgroundControlSetup(flutterEngine.binaryMessenger, self)
-            self.flutterSideReady.wait()
-            FlutterBridgeSetup.createCommonBridges(binaryMessenger: flutterEngine.binaryMessenger)
-            FlutterBridgeSetup.createBackgroundBridges(binaryMessenger: flutterEngine.binaryMessenger)
-            self.iOSSideReady.signal()
+            DispatchQueue.global().async {
+                self.flutterSideReady.wait()
+                DispatchQueue.main.async {
+                    FlutterBridgeSetup.createCommonBridges(binaryMessenger: flutterEngine.binaryMessenger)
+                    FlutterBridgeSetup.createBackgroundBridges(binaryMessenger: flutterEngine.binaryMessenger)
+                    self.iOSSideReady.signal()
+                    seal.fulfill(())
+                }
+                
+                
+            }
         }
+//
+            
+        
     }
 }

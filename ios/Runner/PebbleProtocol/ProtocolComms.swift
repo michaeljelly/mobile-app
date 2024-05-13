@@ -80,6 +80,7 @@ class ProtocolComms {
     }
     
     public func receivePacket(packet: [UInt8]) {
+        print("Received packet: \(packet.count)")
         let bytes = KotlinByteArray.init(size: Int32(packet.count))
         for (i, b) in packet.enumerated() {
             bytes.set(index: Int32(i), value: Int8(bitPattern: b))
@@ -120,7 +121,8 @@ class ProtocolComms {
         sendLoopRunning = true
         DispatchQueue.main.async {[self] in
             firstly {
-                protocolHandler.openProtocolPromise()
+                print("protocol opening things on  \(String(describing: Thread.current))")
+                return protocolHandler.openProtocolPromise()
             }.done {
                 ioDispatch.async {
                     defer {
@@ -129,6 +131,8 @@ class ProtocolComms {
                     }
                     while (true) {
                         do {
+                            print("Handling things on  \(String(describing: Thread.current))")
+
                             let packet = try protocolHandler.waitForNextPacketPromise().wait()
                             let success = rawSend(bytearray: KUtil.shared.uByteArrayAsByteArray(arr: packet.data))
                             

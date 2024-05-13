@@ -50,4 +50,4 @@ test/**/failures/
 /.fvm
 
 #secrets
-# local.properties
+local.properties
